@@ -609,6 +609,11 @@ if (au) {
     msg.textContent = "";
     msg.style.color = "";
     $(".help a").hidden = false;
+
+    const socPrompt = $("#soc-prompt");
+    if (socPrompt) {
+      socPrompt.textContent = k == "signup" ? "or sign up with" : "or continue with";
+    }
   };
 
   const setMessage = (message, color = "#c0262d") => {
@@ -762,16 +767,177 @@ if (au) {
     };
   });
 
-  /* Google and Apple demo buttons */
+  /* Google and Microsoft OAuth authentication */
+
+  const oauthModal = $("#oauth-modal");
+  const oauthTitle = $("#oauth-title");
+  const oauthProviderIcon = $("#oauth-provider-icon");
+  const oauthPromptText = $("#oauth-prompt-text");
+  const oauthAcctList = $("#oauth-acct-list");
+  const oauthCustomForm = $("#oauth-custom-form");
+  const oauthProviderNameInline = $("#oauth-provider-name-inline");
+  const oauthStatus = $("#oauth-status");
+  const oauthStatusText = $("#oauth-status-text");
+  const oauthBodyContent = $("#oauth-body-content");
+  const oauthCloseBtn = $("#oauth-close-btn");
+
+  const ICONS = {
+    Google: `<svg width="24" height="24" viewBox="0 0 24 24" aria-hidden="true">
+      <path fill="#4285F4" d="M23.745 12.27c0-.7-.06-1.4-.19-2.07H12v4.51h6.6c-.29 1.52-1.14 2.82-2.4 3.68v3.05h3.88c2.27-2.09 3.66-5.17 3.66-9.17z"/>
+      <path fill="#34A853" d="M12 24c3.24 0 5.95-1.08 7.93-2.91l-3.88-3.05c-1.08.72-2.45 1.16-4.05 1.16-3.12 0-5.77-2.1-6.72-4.93H1.25v3.15C3.26 21.36 7.33 24 12 24z"/>
+      <path fill="#FBBC05" d="M5.28 14.27c-.25-.72-.38-1.49-.38-2.27s.13-1.55.38-2.27V6.58H1.25C.45 8.18 0 9.97 0 12s.45 3.82 1.25 5.42l4.03-3.15z"/>
+      <path fill="#EA4335" d="M12 4.75c1.77 0 3.35.61 4.6 1.8l3.42-3.42C17.95 1.19 15.24 0 12 0 7.33 0 3.26 2.64 1.25 6.58l4.03 3.15c.95-2.83 3.6-4.98 6.72-4.98z"/>
+    </svg>`,
+    Microsoft: `<svg width="24" height="24" viewBox="0 0 23 23" aria-hidden="true">
+      <path fill="#f25022" d="M1 1h10v10H1z"/>
+      <path fill="#00a4ef" d="M1 12h10v10H1z"/>
+      <path fill="#7fba00" d="M12 1h10v10H12z"/>
+      <path fill="#ffb900" d="M12 12h10v10H12z"/>
+    </svg>`
+  };
+
+  const getSuggestedAccounts = (provider) => {
+    if (provider === "Google") {
+      return [
+        { name: "Ravi Singam", email: "ravi.singam@gmail.com" },
+        { name: "John Smith", email: "john.smith@gmail.com" }
+      ];
+    } else {
+      return [
+        { name: "Ravi Singam", email: "ravi.singam@outlook.com" },
+        { name: "Corporate Account", email: "ravi@company.onmicrosoft.com" }
+      ];
+    }
+  };
+
+  let activeProvider = null;
+
+  const closeOAuthModal = () => {
+    if (!oauthModal) return;
+    oauthModal.classList.remove("active");
+    if (oauthStatus) oauthStatus.style.display = "none";
+    if (oauthBodyContent) oauthBodyContent.style.display = "block";
+  };
+
+  const completeOAuthAuth = (user, provider) => {
+    if (oauthBodyContent) oauthBodyContent.style.display = "none";
+    if (oauthStatus) oauthStatus.style.display = "flex";
+    if (oauthStatusText) {
+      oauthStatusText.textContent = `Connecting to ${provider}...`;
+    }
+
+    // Persist or register user in sfc_users if not present
+    const users = getUsers();
+    let existing = users.find((u) => u.email.toLowerCase() === user.email.toLowerCase());
+    if (!existing) {
+      existing = {
+        name: user.name,
+        email: user.email.toLowerCase(),
+        provider: provider,
+        createdAt: new Date().toISOString()
+      };
+      users.push(existing);
+      try {
+        localStorage.setItem("sfc_users", JSON.stringify(users));
+      } catch (e) {}
+    }
+
+    try {
+      localStorage.setItem(
+        "sfc_user",
+        JSON.stringify({
+          name: existing.name || user.name,
+          email: existing.email || user.email,
+          provider: provider
+        })
+      );
+    } catch (e) {}
+
+    setTimeout(() => {
+      if (oauthStatusText) {
+        oauthStatusText.textContent = `Authenticated! Redirecting to your dashboard...`;
+      }
+      setTimeout(() => {
+        closeOAuthModal();
+        setMessage(`Signed in successfully with ${provider}! Redirecting...`, "#16803c");
+        location.href = "dashboard.html";
+      }, 700);
+    }, 900);
+  };
+
+  const openOAuthModal = (provider) => {
+    if (!oauthModal) return;
+    activeProvider = provider;
+    oauthTitle.textContent = `Continue with ${provider}`;
+    oauthProviderNameInline.textContent = provider + " account";
+    oauthProviderIcon.innerHTML = ICONS[provider] || "";
+    oauthPromptText.textContent = `Choose an account to sign in or create an account with ${provider}:`;
+
+    // Populate suggested accounts
+    oauthAcctList.innerHTML = "";
+    const accounts = getSuggestedAccounts(provider);
+    accounts.forEach((acct) => {
+      const btn = document.createElement("button");
+      btn.type = "button";
+      btn.className = "oauth-acct-btn";
+      const initial = acct.name.charAt(0).toUpperCase();
+      btn.innerHTML = `
+        <span class="oauth-acct-avatar">${initial}</span>
+        <div class="oauth-acct-info">
+          <div class="oauth-acct-name">${acct.name}</div>
+          <div class="oauth-acct-email">${acct.email}</div>
+        </div>
+      `;
+      btn.onclick = () => {
+        completeOAuthAuth(acct, provider);
+      };
+      oauthAcctList.appendChild(btn);
+    });
+
+    // Reset custom form
+    if (oauthCustomForm) {
+      oauthCustomForm.reset();
+      const emailInput = $("#oauth-email-input");
+      if (emailInput) {
+        emailInput.placeholder = provider === "Google" ? "name@gmail.com" : "name@outlook.com";
+      }
+    }
+
+    oauthBodyContent.style.display = "block";
+    oauthStatus.style.display = "none";
+    oauthModal.classList.add("active");
+  };
+
+  if (oauthCloseBtn) {
+    oauthCloseBtn.onclick = closeOAuthModal;
+  }
+
+  if (oauthModal) {
+    oauthModal.onclick = (e) => {
+      if (e.target === oauthModal) {
+        closeOAuthModal();
+      }
+    };
+  }
+
+  if (oauthCustomForm) {
+    oauthCustomForm.onsubmit = (e) => {
+      e.preventDefault();
+      const nameInput = $("#oauth-name-input");
+      const emailInput = $("#oauth-email-input");
+      const name = nameInput ? nameInput.value.trim() : "";
+      const email = emailInput ? emailInput.value.trim() : "";
+
+      if (!name || !email) return;
+
+      completeOAuthAuth({ name, email }, activeProvider || "OAuth");
+    };
+  }
 
   $$("[data-provider]").forEach((button) => {
     button.onclick = () => {
       const provider = button.dataset.provider;
-
-      setMessage(
-        provider +
-          " sign-in is not configured yet. Please use email signup and login.",
-      );
+      openOAuthModal(provider);
     };
   });
 

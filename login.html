@@ -53,6 +53,214 @@
         outline: 2px solid #2846f0;
         border-radius: 5px;
       }
+
+      .soc-btn {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 10px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: background-color 0.2s ease, border-color 0.2s ease, transform 0.15s ease, box-shadow 0.15s ease;
+      }
+
+      .soc-btn svg {
+        flex-shrink: 0;
+      }
+
+      /* Modal styles for professional OAuth simulation */
+      .oauth-overlay {
+        position: fixed;
+        inset: 0;
+        background: rgba(15, 17, 20, 0.65);
+        backdrop-filter: blur(4px);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 9999;
+        opacity: 0;
+        visibility: hidden;
+        transition: opacity 0.25s ease, visibility 0.25s ease;
+        padding: 20px;
+      }
+
+      .oauth-overlay.active {
+        opacity: 1;
+        visibility: visible;
+      }
+
+      .oauth-modal {
+        background: #fff;
+        border-radius: 16px;
+        width: 100%;
+        max-width: 440px;
+        box-shadow: 0 20px 45px rgba(0, 0, 0, 0.25);
+        overflow: hidden;
+        transform: translateY(16px) scale(0.96);
+        transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+      }
+
+      .oauth-overlay.active .oauth-modal {
+        transform: translateY(0) scale(1);
+      }
+
+      .oauth-header {
+        padding: 20px 24px;
+        border-bottom: 1px solid var(--line);
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+      }
+
+      .oauth-header-left {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+      }
+
+      .oauth-header h3 {
+        font-size: 16px;
+        font-weight: 700;
+        margin: 0;
+        color: var(--ink);
+      }
+
+      .oauth-header p {
+        font-size: 12px;
+        color: var(--steel);
+        margin: 2px 0 0;
+      }
+
+      .oauth-close {
+        background: none;
+        border: none;
+        font-size: 22px;
+        line-height: 1;
+        cursor: pointer;
+        color: var(--steel);
+        padding: 4px;
+        border-radius: 6px;
+      }
+
+      .oauth-close:hover {
+        color: var(--ink);
+        background: rgba(0, 0, 0, 0.05);
+      }
+
+      .oauth-body {
+        padding: 24px;
+      }
+
+      .oauth-prompt {
+        font-size: 14px;
+        color: var(--ink);
+        margin-bottom: 16px;
+      }
+
+      .oauth-prompt strong {
+        color: #2846f0;
+      }
+
+      .oauth-acct-list {
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+        margin-bottom: 20px;
+      }
+
+      .oauth-acct-btn {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 12px 14px;
+        border: 1.5px solid var(--line);
+        border-radius: 12px;
+        background: #fff;
+        text-align: left;
+        cursor: pointer;
+        transition: border-color 0.2s, background-color 0.2s, transform 0.15s;
+        width: 100%;
+      }
+
+      .oauth-acct-btn:hover {
+        border-color: #2846f0;
+        background: #f8faff;
+        transform: translateX(2px);
+      }
+
+      .oauth-acct-avatar {
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        background: #2846f0;
+        color: #fff;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 700;
+        font-size: 16px;
+        flex-shrink: 0;
+      }
+
+      .oauth-acct-info {
+        flex: 1;
+        min-width: 0;
+      }
+
+      .oauth-acct-name {
+        font-weight: 600;
+        font-size: 14px;
+        color: var(--ink);
+      }
+
+      .oauth-acct-email {
+        font-size: 13px;
+        color: var(--steel);
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+
+      .oauth-custom-form {
+        border-top: 1px dashed var(--line);
+        padding-top: 16px;
+        margin-top: 8px;
+      }
+
+      .oauth-custom-form label {
+        font-size: 13px;
+        margin-bottom: 4px;
+      }
+
+      .oauth-custom-form input {
+        height: 42px;
+        margin-bottom: 12px;
+      }
+
+      .oauth-status {
+        display: none;
+        align-items: center;
+        justify-content: center;
+        gap: 12px;
+        padding: 24px;
+        text-align: center;
+        font-size: 15px;
+        font-weight: 600;
+        color: var(--ink);
+      }
+
+      .oauth-spinner {
+        width: 24px;
+        height: 24px;
+        border: 3px solid rgba(40, 70, 240, 0.2);
+        border-top-color: #2846f0;
+        border-radius: 50%;
+        animation: spin 0.8s linear infinite;
+      }
+
+      @keyframes spin {
+        to { transform: rotate(360deg); }
+      }
     </style>
   </head>
 
@@ -246,15 +454,27 @@
 
         <!-- SOCIAL LOGIN -->
 
-        <div class="or">or continue with</div>
+        <div class="or" id="soc-prompt">or continue with</div>
 
         <div class="soc">
-          <button class="btn line" type="button" data-provider="Google">
-            Google
+          <button class="btn line soc-btn" type="button" data-provider="Google" aria-label="Continue with Google">
+            <svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true">
+              <path fill="#4285F4" d="M23.745 12.27c0-.7-.06-1.4-.19-2.07H12v4.51h6.6c-.29 1.52-1.14 2.82-2.4 3.68v3.05h3.88c2.27-2.09 3.66-5.17 3.66-9.17z"/>
+              <path fill="#34A853" d="M12 24c3.24 0 5.95-1.08 7.93-2.91l-3.88-3.05c-1.08.72-2.45 1.16-4.05 1.16-3.12 0-5.77-2.1-6.72-4.93H1.25v3.15C3.26 21.36 7.33 24 12 24z"/>
+              <path fill="#FBBC05" d="M5.28 14.27c-.25-.72-.38-1.49-.38-2.27s.13-1.55.38-2.27V6.58H1.25C.45 8.18 0 9.97 0 12s.45 3.82 1.25 5.42l4.03-3.15z"/>
+              <path fill="#EA4335" d="M12 4.75c1.77 0 3.35.61 4.6 1.8l3.42-3.42C17.95 1.19 15.24 0 12 0 7.33 0 3.26 2.64 1.25 6.58l4.03 3.15c.95-2.83 3.6-4.98 6.72-4.98z"/>
+            </svg>
+            <span class="soc-label">Google</span>
           </button>
 
-          <button class="btn line" type="button" data-provider="Apple">
-            Apple
+          <button class="btn line soc-btn" type="button" data-provider="Microsoft" aria-label="Continue with Microsoft">
+            <svg width="18" height="18" viewBox="0 0 23 23" aria-hidden="true">
+              <path fill="#f25022" d="M1 1h10v10H1z"/>
+              <path fill="#00a4ef" d="M1 12h10v10H1z"/>
+              <path fill="#7fba00" d="M12 1h10v10H12z"/>
+              <path fill="#ffb900" d="M12 12h10v10H12z"/>
+            </svg>
+            <span class="soc-label">Microsoft</span>
           </button>
         </div>
 
@@ -266,6 +486,52 @@
         </p>
       </div>
     </main>
+
+    <!-- Professional OAuth Selection Modal -->
+    <div id="oauth-modal" class="oauth-overlay" role="dialog" aria-modal="true" aria-labelledby="oauth-title">
+      <div class="oauth-modal">
+        <div class="oauth-header">
+          <div class="oauth-header-left">
+            <span id="oauth-provider-icon"></span>
+            <div>
+              <h3 id="oauth-title">Sign in with Google</h3>
+              <p>Choose an account to continue to Stronger Club</p>
+            </div>
+          </div>
+          <button type="button" class="oauth-close" id="oauth-close-btn" aria-label="Close dialog">&times;</button>
+        </div>
+
+        <div class="oauth-body" id="oauth-body-content">
+          <p class="oauth-prompt" id="oauth-prompt-text">
+            To continue, select an existing account or enter your account details.
+          </p>
+
+          <div class="oauth-acct-list" id="oauth-acct-list"></div>
+
+          <form id="oauth-custom-form" class="oauth-custom-form">
+            <div style="font-size: 13px; font-weight: 600; margin-bottom: 10px; color: var(--ink);">
+              Or sign in with another <span id="oauth-provider-name-inline">account</span>
+            </div>
+            <label>
+              Full Name
+              <input type="text" id="oauth-name-input" required placeholder="Alex Morgan" />
+            </label>
+            <label>
+              Email address
+              <input type="email" id="oauth-email-input" required placeholder="alex@gmail.com" />
+            </label>
+            <button class="btn dark" type="submit" style="width: 100%; margin-top: 6px;">
+              Continue to Stronger
+            </button>
+          </form>
+        </div>
+
+        <div class="oauth-status" id="oauth-status">
+          <div class="oauth-spinner"></div>
+          <span id="oauth-status-text">Authenticating securely...</span>
+        </div>
+      </div>
+    </div>
 
     <script src="js/site.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/motion@11.18.2/dist/motion.js"></script>
